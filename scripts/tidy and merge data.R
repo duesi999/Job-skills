@@ -5,7 +5,7 @@ library(zoo)
 
 #read in datasets
 df_Adzuna_import <- read_csv("data/Adzuna_data_v6.csv")
-df_IVI_import <- read_xlsx("data/IVI_DATA_regional - May 2010 onwards.xlsx", sheet = 2, header = )
+df_IVI_import <- read_xlsx("data/IVI_DATA_regional - May 2010 onwards.xlsx", sheet = 2)
 
 df_IVI <- df_IVI_import %>%
   #select major occupational groups
@@ -60,7 +60,11 @@ df_IVI <- df_IVI_import %>%
                                                         "SALES WORKERS", "MACHINERY OPERATORS AND DRIVERS", "LABOURERS"), labels =
                                  c("Managers", "Professionals", "Technicians and Trades Workers",
                                    "Community and Personal Service Workers",  "Clerical and Administrative Workers",
-                                   "Sales Workers", "Machinery Operators and Drivers", "Labourers")))
+                                   "Sales Workers", "Machinery Operators and Drivers", "Labourers"))) %>%
+  #group by all variables except count
+  group_by_at(vars(-IVI_count)) %>%
+  summarise(IVI_count = sum(IVI_count))
+  
 
 df_Adzuna <- df_Adzuna_import %>%
   #merge year and month columns and turn into date
@@ -70,8 +74,32 @@ df_Adzuna <- df_Adzuna_import %>%
   rename(ANZSCO_TITLE = occupation) %>%
   mutate(ANZSCO_TITLE = factor(ANZSCO_TITLE ,levels = c("Managers", "Professionals", "Technicians and Trades Workers",
                                                         "Community and Personal Service Workers",  "Clerical and Administrative Workers",
-                                                        "Sales Workers", "Machinery Operators and Drivers", "Labourers")))
+                                                        "Sales Workers", "Machinery Operators and Drivers", "Labourers"))) %>%
+  #group by all variables except count
+  group_by(Month, GCCSA, ANZSCO_TITLE) %>%
+  summarise(Adzuna_count = sum(Adzuna_count)) %>%
+
+#calculate moving average
+mav <- function(x,n=3){stats::filter(x,rep(1/n,n), sides=2)}
+
+df_Adzuna_rf <- df_Adzuna %>%
+  group_by(GCCSA, ANZSCO_TITLE) %>%
+  drop_na()%>%
+  mutate(Adzuna_mav = mav(Adzuna_count))
+
     
-df <- df_Adzuna %>%
-  left_join(df_IVI, by = c("Month", "ANZSCO_TITLE", "GCCSA"))
+df_merged <- df_Adzuna_rf %>%
+  left_join(df_IVI, by = c("Month", "ANZSCO_TITLE", "GCCSA")) %>%
+  drop_na() %>%
+  ungroup()%>%
+  mutate(GCCSA = factor(GCCSA ,levels = c("Greater Sydney", "Rest of NSW", "Greater Melbourne", "Rest of Vic.", "Greater Brisbane",
+                                        "Rest of Qld", "Greater Adelaide", "Rest of SA", "Greater Perth", "Rest of WA", "Greater Hobart", "Rest of Tas.", "Greater Darwin", "Rest of NT", "Australian Capital Territory"), 
+                       labels = c("Greater Sydney", "Rest of NSW", "Greater Melbourne", "Rest of Vic.", "Greater Brisbane", "Rest of Qld", "Greater Adelaide", 
+                                  "Rest of SA", "Greater Perth", "Rest of WA", "Greater Hobart", "Rest of Tas.", "Greater Darwin", "Rest of NT", "Australian Capital Territory")))
+
+
+df_merged_long <- df_merged %>%
+  pivot_longer(c(Adzuna_count, IVI_count, Adzuna_mav), names_to = "source", values_to = "count") %>%
+  mutate(source = factor(source))
     
+write_csv(df_merged, "data/jobs_data_merged.csv")
