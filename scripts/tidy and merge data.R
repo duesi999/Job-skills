@@ -77,7 +77,7 @@ df_Adzuna <- df_Adzuna_import %>%
                                                         "Sales Workers", "Machinery Operators and Drivers", "Labourers"))) %>%
   #group by all variables except count
   group_by(Month, GCCSA, ANZSCO_TITLE) %>%
-  summarise(Adzuna_count = sum(Adzuna_count)) %>%
+  summarise(Adzuna_count = sum(Adzuna_count))
 
 #calculate moving average
 mav <- function(x,n=3){stats::filter(x,rep(1/n,n), sides=2)}
@@ -103,3 +103,6 @@ df_merged_long <- df_merged %>%
   mutate(source = factor(source))
     
 write_csv(df_merged, "data/jobs_data_merged.csv")
+write_csv(df_merged_long, "data/jobs_data_merged_long.csv")
+
+save(df_merged, df_merged_long, file="data/jobs_data_merged.Rdata")
