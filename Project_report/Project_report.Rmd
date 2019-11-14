@@ -1,0 +1,153 @@
+---
+title: Comparison of Adzuna and IVI Job Ads Data
+subtitle: 
+author:  Andreas Duenser
+affiliation: CSIRO Data61 # Or group/team
+photo: resources/img/photo.jpeg
+
+short_title: Optional short title
+
+output: 
+  DSreport::project_summary:
+    code_folding: hide
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  results = 'asis',
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = 'center'
+)
+
+#Load libraries
+library(tidyverse)
+library(kableExtra)
+library(gganimate)
+library(gifski)
+
+#read in data files
+load("../data/jobs_data_merged.Rdata")
+```
+
+
+# Introduction
+(todo - personal introduction...) Andreas - Psychology inspired Human-Factors researcher.
+
+# My Project
+Online job advertisements are now being used around the world as a source of insight into the nature of our rapidly changing labour markets. However, before we can determine what inferences are appropriate form the data and used it for informing decisions about labour markets, is is importatnt to check the quality and potential bias of this datasource. Our goal is to understand the strengths and weaknesses of online job advertisements as a source of information about changing demand for workers and skills.
+We here present one example of this data characterisation process: a comparison of two online job ad datasets: Adzuna Australia (a dataset we used in the wider project) database and the Internet Vacancy Index (a dataset collected by The Department of Jobs and Small Business). Both of these dataset collect online job ads from different sources (online job ads portals). 
+
+## Preliminary results
+
+### IVI and Adzuna job ds count - collapsed over all jobs and GCCSAs
+
+#### Plot
+
+```{r plotCollapsed, out.width='60%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="IVI and Adzuna job ads count - collapsed over all jobs and GCCSAs"}
+
+df_merged_long_collapsed <- df_merged_long %>%
+  group_by(Month, source) %>%
+  #  filter(source !="Adzuna_count") %>%
+  summarise(count = sum(count))
+
+ggplot(df_merged_long_collapsed, aes(x = Month, y = count, colour = source)) +
+    geom_line() +
+    geom_point() +
+    labs(title = "Comparison of Adzuna and IVI counts (all occupations) per GCCSA",
+       x = "Date") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(hjust = 0.5),
+        text = element_text(size=7))
+#  transition_reveal(Month)
+
+# animate(p, renderer = gifski_renderer(loop = F))
+
+```
+
+#### Correlation
+
+```{r corrAll, out.width='100%', echo = T}
+
+cor_collapsed <- round(cor(df_merged[, c(4,5,7)]),2)
+
+knitr::kable(cor_collapsed, format = "html", caption = "Correlations IVI and Adzuna job ads count - collapsed over all jobs and GCCSAs") %>% 
+  kable_styling("striped")
+
+```
+
+### GCCSAs (aggregated over occupations)
+
+#### Plots
+
+```{r plotGCCSA, out.width='100%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="IVI and Adzuna job ads count - GCCSA"}
+
+df_merged_long_GCCSA <- df_merged_long %>%
+  filter(source != "Adzuna_count") %>%
+  group_by(Month, GCCSA, source) %>%
+#  filter(source !="Adzuna_count") %>%
+  summarise(count = sum(count))
+
+ggplot(df_merged_long_GCCSA, aes(x = Month, y = count, colour = source)) +
+  geom_line() +
+  labs(title = "Comparison of Adzuna and IVI counts (all occupations) per GCCSA",
+       x = "Date") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+      plot.title = element_text(hjust = 0.5),
+      text = element_text(size=7)) +
+  facet_wrap(~GCCSA, scales = "free_y")
+
+```
+
+#### Correlation
+
+```{r corrGCCSA, out.width='100%', echo=FALSE}
+
+df_merged_GCCSA <- df_merged %>%
+  group_by(Month, GCCSA) %>%
+  summarise(Adzuna_mav = sum(Adzuna_mav),
+            IVI_count = sum(IVI_count))
+
+corr_GCCSA <- cor.test(df_merged_GCCSA$Adzuna_mav, df_merged_GCCSA$IVI_count)
+corr_GCCSA
+
+```
+
+Correlation is `print(corr_GCCSA$estimate)`
+
+Plots for occupations (collapsed over GCCSAs)
+```{r plotOccupations, out.width='100%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="IVI and Adzuna job ads count - Occupations"}
+df_merged_long_occupation <- df_merged_long %>%
+  group_by(Month, ANZSCO_TITLE, source) %>%
+  summarise(count = sum(count))
+
+ggplot(df_merged_long_occupation, aes(x = Month, y = count, colour = source)) +
+  geom_line() +
+  labs(title = "Comparison of Adzuna and IVI counts (all occupations) per GCCSA",
+       x = "Date") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(hjust = 0.5),
+        text = element_text(size=7)) +
+  facet_wrap(~ANZSCO_TITLE, scales = "free_y")
+
+```
+
+
+# My time went ...
+
+What parts of the project took the most time and effort? Were there any surprising challenges you
+encountered, and how did you solve them?
+
+# Next steps
+
+What further steps do you wish your project could take? Or are there any new digital skills that you
+are keen to develop as a result of your involvement in the Data School?
+
+# My Data School Experience
+
+This poster is mostly about your synthesis project. However we would also like to hear about other
+parts of your Data School experience. What aspects of the program did you really enjoy? How have you
+been applying the skills you have learned in your daily work? Have you been able to transfer this 
+knowledge to your team members? Concrete examples demonstrating this would be useful here
+(meetings/talks/collaborations/new roles). Any descriptions of the personal impact the program has 
+had are welcome here as well!
