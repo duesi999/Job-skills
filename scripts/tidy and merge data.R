@@ -82,13 +82,13 @@ df_Adzuna <- df_Adzuna_import %>%
 #calculate moving average
 mav <- function(x,n=3){stats::filter(x,rep(1/n,n), sides=2)}
 
-df_Adzuna_rf <- df_Adzuna %>%
+df_Adzuna_mav <- df_Adzuna %>%
   group_by(GCCSA, ANZSCO_TITLE) %>%
   drop_na()%>%
-  mutate(Adzuna_mav = mav(Adzuna_count))
+  mutate(Adzuna_mav_count = mav(Adzuna_count))
 
     
-df_merged <- df_Adzuna_rf %>%
+df_merged <- df_Adzuna_mav %>%
   left_join(df_IVI, by = c("Month", "ANZSCO_TITLE", "GCCSA")) %>%
   drop_na() %>%
   ungroup()%>%
@@ -99,7 +99,7 @@ df_merged <- df_Adzuna_rf %>%
 
 
 df_merged_long <- df_merged %>%
-  pivot_longer(c(Adzuna_count, IVI_count, Adzuna_mav), names_to = "source", values_to = "count") %>%
+  pivot_longer(c(Adzuna_count, IVI_count, Adzuna_mav_count), names_to = "source", values_to = "count") %>%
   mutate(source = factor(source))
     
 write_csv(df_merged, "data/jobs_data_merged.csv")
