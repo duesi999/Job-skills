@@ -26,42 +26,50 @@ library(gganimate)
 library(gifski)
 
 #read in data files
+#data import, tidying, merging and other preparation / manipulation for the report here is done in other scripts in this repository
 load("../data/jobs_data_merged.Rdata")
 ```
 
 
 # Introduction
-Andreas - Psychology inspired Human-Factors researcher.
+I'm Senior Research Scientist with Data61 in Hobart with a background in psychology / Human-Factors. I'm interested in the convergence of human behaviour & cognition, and emerging interactive technology. Combining these areas enables innovative Human-Machine Interaction (HMI) research. 
+My research focuses on: 
+
+* HMI research with new interactive & automation technologies and decision support systems
+
+* Design of technology applications for training and healthcare
+
+* New approaches for assessing and measuring human behaviour and cognitive processes (including psychometrics, cognitive load and trust dynamics)
 
 # My Project
-Online job advertisements are now being used around the world as a source of insight into the nature of our rapidly changing labour markets. However, before we can determine what inferences are appropriate form the data and we can use the data for informing decisions about labour markets, is is important to check the quality and potential bias of this datasource. Our goal of the wider project this report is part of, is to understand the strengths and weaknesses of online job advertisements as a source of information about changing demand for workers and skills.
-We here present one example of this data characterisation process: a comparison of two online job ad datasets: Adzuna Australia job  ads data (a dataset we are using to create an online skills dashbaord) and the Internet Vacancy Index (IVI - a dataset collected by The Department of Jobs and Small Business). Both of these dataset collect online job ads from different sources (online job ads portals). 
+Online job advertisements are now being used around the world as a source of insight into the nature of our rapidly changing labour markets. However, it is important to check the quality and potential bias of this data sourcebe in order to determine what inferences are appropriate form the data or if/how we can use the data for informing decisions about labour markets. Our goal of the wider project this report is part of, is to understand the strengths and weaknesses of online job advertisements as a source of information about changing demand for workers and skills.
+We here present one example of the data validation and characterisation process: a comparison of two online job ad datasets: Adzuna Australia job  ads data (a dataset we are using to create an online skills dashbaord) and the Internet Vacancy Index (IVI - a dataset collected by The Department of Jobs and Small Business). Both of these datasets comprise online job ads from different sources (online job ads portals). 
 
 # Results
 
 ## Comparison of overall Adzuna Australia and IVI job ads counts between 2015 - 2019
 
-Figure \@ref(fig:plotAll) compares job ad counts from both data sets over time. The IVI data applies a three-month rolling average filter. The red line shows the original (unfiltered) Adzuna Australia data and the green line the same data with a three-month rolling average filter. As expected, the latter corresponds better with the IVI data (also see \ref@(tab:corrAll)). Therefore, we will only use  the filtered Adzuna Australia data for further visualisation and analysis.
+Figure \@ref(fig:plotAll) compares job ads counts from both datasets over time. The IVI data applies a three-month moving average filter . The red line shows the original (unfiltered) Adzuna Australia data and the green line the same data with a three-month moving average filter (mav) applied. As expected, the latter corresponds better with the IVI data (also see Table \@ref(tab:corrAll)). Therefore, we will only use the filtered Adzuna Australia data for further visualisation and analysis.
 
-```{r plotAll, out.width='60%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="IVI and Adzuna job ads count - collapsed over all jobs and GCCSAs"}
+```{r plotAll, out.width='60%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Adzuna Australia and IVI job ad counts - collapsed over all occupations and GCCSAs"}
 
 df_merged_long_all <- df_merged_long %>%
   group_by(Month, source) %>%
   #  filter(source !="Adzuna_count") %>%
   summarise(count = sum(count))
 
-ggplot(df_merged_long_all, aes(x = Month, y = count, colour = source)) +
+p <- ggplot(df_merged_long_all, aes(x = Month, y = count, colour = source)) +
     geom_line() +
     geom_point(shape = 1) +
-    labs(title = "Comparison of Adzuna and IVI counts 2015 - 2019",
-       x = "Date") +
+    labs(title = "Comparison of Adzuna Australia and IVI job ad counts between 2015 - 2019",
+       x = "Date", y = "Count") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1),
         plot.title = element_text(hjust = 0.5),
         text = element_text(size=7)) +
 ##add animation
     transition_reveal(Month)
 ##stop animation after frist loop
-# animate(p, renderer = gifski_renderer(loop = F))
+animate(p, renderer = gifski_renderer(loop = F))
 
 ```
 
@@ -69,16 +77,16 @@ ggplot(df_merged_long_all, aes(x = Month, y = count, colour = source)) +
 
 cor_collapsed <- round(cor(df_merged[, c(4,5,7)]),2)
 
-knitr::kable(cor_collapsed, format = "html", caption = "Correlations IVI and Adzuna job ads count - collapsed over all jobs and GCCSAs") %>% 
+knitr::kable(cor_collapsed, format = "html", caption = "Correlations Adzuna Australia and IVI job ads counts over time, all occupations and GCCSAs") %>% 
   kable_styling("striped", full_width = F)
 
 ```
 
 ## Comparison of Adzuna Australia and IVI job ads counts per GCCSAs
 
-To get another perspective of the comparison the counts from the two datasets over time, we scatter plot the data and with a LOESS curve (locally estimated scatterplot smoothing) to assess temporal trends. Figure \@ref(fig:plotGCCSA) shows data per GCCSA (Greater Capital City Statistical Area for all states and Territories. 
+To get another perspective of the comparison the counts from the two datasets over time, we scatter plot the data and fit a LOESS curve (locally estimated scatterplot smoothing) to assess temporal trends. Figure \@ref(fig:plotGCCSA) shows data per GCCSA (Greater Capital City Statistical Area) for all States and Territories. 
 
-```{r plotGCCSA, out.width='100%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="IVI and Adzuna job ads count - GCCSA"}
+```{r plotGCCSA, out.width='100%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Adzuna Australia and IVI job ads counts - GCCSA"}
 
 df_merged_long_GCCSA <- df_merged_long %>%
   filter(source != "Adzuna_count") %>%
@@ -88,8 +96,8 @@ df_merged_long_GCCSA <- df_merged_long %>%
 ggplot(df_merged_long_GCCSA, aes(x = Month, y = count, colour = source)) +
   geom_point(shape = 1, size = 1, alpha = 0.7) +
   geom_smooth(method = 'loess') +
-  labs(title = "Comparison of Adzuna and IVI counts (all occupations) per GCCSA",
-       x = "Date") +
+  labs(title = "Comparison of Adzuna Australia and IVI job ads counts per GCCSA (all occupations)",
+       x = "Date", y = "Count") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         plot.title = element_text(hjust = 0.5),
         text = element_text(size=7)) +
@@ -97,9 +105,9 @@ ggplot(df_merged_long_GCCSA, aes(x = Month, y = count, colour = source)) +
 
 ```
 
-Table \@ref(tab:corrGCCSA) shows correlation between Adzuna and IVI job ads counts over time per GCCSA. 
+Table \@ref(tab:corrGCCSA) shows correlation between Adzuna Australia and IVI job ads counts per GCCSA over time and all occupations. 
 
-```{r corrGCCSA, out.width='50%', echo=FALSE}
+```{r corrGCCSA, out.width='50%', echo=T}
 df_merged_GCCSA <- df_merged %>%
   group_by(Month, GCCSA) %>%
   summarise(Adzuna_mav_count = sum(Adzuna_mav_count),
@@ -133,14 +141,14 @@ correlations_GCCSA[7,3] <- with(df_merged_GCCSA %>% filter(GCCSA == "Rest of NT"
 correlations_GCCSA[8,1] <- "ATC"
 correlations_GCCSA[8,2] <- with(df_merged_GCCSA %>% filter(GCCSA == "Australian Capital Territory"), round(cor(Adzuna_mav_count, IVI_count), 2))
 
-knitr::kable(correlations_GCCSA, format = "html", caption = "Correlations IVI and Adzuna job ads count - GCCSAs") %>%
+knitr::kable(correlations_GCCSA, format = "html", caption = "Correlations Adzuna Australia and IVI job ads counts - GCCSAs") %>%
   kable_styling("striped", full_width = F)
 ```
 
 
 ## Comparison of Adzuna Australia and IVI job ads counts per occupation
 
-Figure \@ref(fig:plotOccupation) compares job ad counts of Adzuna Australia and IVI job ads counts over time per major occupational group (unsing ANZCO - Australian and New Zealand Standard Classification of Occupations). Again, we scatter plot the data and with a LOESS curve. 
+Figure \@ref(fig:plotOccupation) compares counts of Adzuna Australia and IVI job ads per major occupational group (unsing ANZCO - Australian and New Zealand Standard Classification of Occupations) over time and all GCCSAs. Again, we scatter plot the data and fit a LOESS curve. 
 
 ```{r plotOccupation, out.width='100%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="IVI and Adzuna job ads count - Occupations"}
 df_merged_long_occupation <- df_merged_long %>%
@@ -151,8 +159,8 @@ df_merged_long_occupation <- df_merged_long %>%
 ggplot(df_merged_long_occupation, aes(x = Month, y = count, colour = source)) +
   geom_point(shape = 1, size = 1, alpha = 0.7) +
   geom_smooth(method = 'loess') +
-  labs(title = "Comparison of Adzuna and IVI counts (all GCCSAa) per occupation",
-       x = "Date") +
+  labs(title = "Comparison of Adzuna Australia and IVI job ads counts per occupation (all GCCSAs)",
+       x = "Date", y = "Count") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         plot.title = element_text(hjust = 0.5),
         text = element_text(size=7)) +
@@ -160,9 +168,9 @@ ggplot(df_merged_long_occupation, aes(x = Month, y = count, colour = source)) +
 ```
 
 
-Table \@ref(tab:corrOccupation) shows correlation between Adzuna Australia and IVI job ads counts over time per major ANZCO occupational group.
+Table \@ref(tab:corrOccupation) shows correlation between Adzuna Australia and IVI job ads counts per major ANZCO occupational group over time and all GCCSAs.
 
-```{r corrOccupation, out.width='100%'}
+```{r corrOccupation, out.width='100%', echo = T}
 df_merged_occupation <- df_merged %>%
   group_by(Month, ANZSCO_TITLE) %>%
   summarise(Adzuna_mav_count = sum(Adzuna_mav_count),
@@ -189,15 +197,15 @@ correlations_occupation[7,2] <- with(df_merged_occupation %>% filter(ANZSCO_TITL
 correlations_occupation[8,1] <- "Labourers"
 correlations_occupation[8,2] <- with(df_merged_occupation %>% filter(ANZSCO_TITLE == "Labourers"), round(cor(Adzuna_mav_count, IVI_count), 2))
 
-knitr::kable(correlations_occupation, format = "html", caption = "Correlations IVI and Adzuna job ads count - occupation") %>%
+knitr::kable(correlations_occupation, format = "html", caption = "Correlations Adzuna Australia and IVI job ads counts - occupation") %>%
   kable_styling("striped", full_width = F)
 ```
 
 ## Comparisons of Adzuna Australia and IVI job ads counts per GCCSA and occupation
 
-Next we plot detailed correlations between the data sources over time for all GCCSAs and occupations (see Figure \@ref(fig:plotCorrelations)).
+Next we plot detailed correlations between the datasets for all GCCSAs and occupations (see Figure \@ref(fig:plotCorrelations)) over time.
 
-```{r plotCorrelations, out.width='100%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="IVI and Adzuna job ads count detailed correlations"}
+```{r plotCorrelations, out.width='100%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Adzuna Australia ans IVI job ads count detailed correlations"}
 
 df_merged %>%
   group_by(GCCSA, ANZSCO_TITLE) %>%
@@ -209,13 +217,15 @@ df_merged %>%
     theme(axis.text.x = element_text(angle = 75, hjust = 1),
         plot.title = element_text(hjust = 0.5),
         text = element_text(size=7)) +
+    xlab("Occupation") +
+    ylab("Correlation") +
     facet_wrap(~GCCSA)
 
 ```
 
-And finally we perform an overall comparsion (data aggregated over time) of Adzuna Australia and IVI job ads counts for all of GCCSAs and occupations (see \@ref(fig:plotGCCSAvsOccupations)).
+And finally, we plot overall counts over time in both datasets for each GCCSA and occupation (see \@ref(fig:plotGCCSAvsOccupations)).
 
-```{r plotGCCSAvsOccupations, out.width='100%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Overall Adzuna and job ads count - GCCSAs and Occupations"}
+```{r plotGCCSAvsOccupations, out.width='100%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Overall Adzuna Australia and job ads counts  - GCCSAs and Occupations"}
   df_merged_long %>%
     filter(source != "Adzuna_count")%>%
     group_by(GCCSA, ANZSCO_TITLE, source) %>%
@@ -225,24 +235,28 @@ And finally we perform an overall comparsion (data aggregated over time) of Adzu
   #geom_point(aes(size = count), alpha = 0.3) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         plot.title = element_text(hjust = 0.5),
-        text = element_text(size=7))
+        text = element_text(size=7)) +
+  ylab("Occupation")
 
 ````
 
 # Summary / Discussion:
 The main take-away points from the above data comparisons are:
+
 * Low correlation between datasets over time within a given geographic location. Correlations for rst of state are generally higher than for capital city areas.
-* Moderate to low correlations over time for sales workers, professionals, managers, and clerical and administrative workers. No correlation for machinery operators and drivers, and negative correlations for technicians and trades Workers as well as community and personal service workers.	Especially these negative correlations are surprising and need to be investigated further. 
-* When drilling down into occupations by GCCSA over time or aggregated over time it no easy to interpret patterns emerge. For some of these combinations the data correspoens better than for others. However, such detailed data might still be valuable for some and assist in informing if or how much such specific job ads data can be relied on for specific decisions.
+
+* Correlations for occupations vary widely from hight to low. We see high to moderate correlations over time for sales workers, professionals, managers, and clerical and administrative workers; no correlation for machinery operators and drivers, and negative correlations for technicians and trades workers as well as community and personal service workers. This would suggest that, taking IVI as a reference, sales, professional and managerial roles are being captured better by Adzuna Australia than other occupations. However, especially the negative correlations are surprising and need to be investigated further. 
+
+* When drilling down into occupations by GCCSA over time it becomes more difficult interpret emerging patterns. For some of these combinations the data correspoens better than for others. However, such detailed data might still be valuable for some and assist in informing how confident we can be in such datasources.
 
 # My time went ...
 
-...by mostly with trying to figure out nitty gritty details and why some of my code does not work (e.g. don't use an underscore for naming r chunks in Markdown etc.); and yes, continuous iterations of tidying, visualising, analysing, tidying...
+...by mostly with trying to figure out nitty gritty details, deciphering error messages, and why some of my code did not work. And continuous iterations of tidying, visualising, analysing, tidying...
 
 # Next steps
 
-My next challenge (apoart from honing my R skills) will be getting into Python.
+My next challenge (apart from honing my R skills) will be getting into Python.
 
 # My Data School Experience
 
-Although is was a considerable time investment and often challenging with managing project and other work, attending Data School gave me time to practise my (emerging) R skills.
+Although it was a considerable time investment and often challenging with managing project and other work, attending Data School gave me time to practise my (emerging) R skills.
