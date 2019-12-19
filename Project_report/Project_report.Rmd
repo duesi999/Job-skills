@@ -65,17 +65,18 @@ p <- ggplot(df_merged_long_all, aes(x = Month, y = count, colour = source)) +
        x = "Date", y = "Count") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1),
         plot.title = element_text(hjust = 0.5),
-        text = element_text(size=7)) +
-##add animation
+        text = element_text(size=9)) +
+    expand_limits(y=c(0, max(df_merged_long_all$count)))
+#add animation
     transition_reveal(Month)
-##stop animation after frist loop
+#stop animation after frist loop
 animate(p, renderer = gifski_renderer(loop = F))
 
 ```
 
 ```{r corrAll, out.width='70%', echo = T}
 
-cor_collapsed <- round(cor(df_merged[, c(4,5,7)]),2)
+cor_collapsed <- round(cor(df_merged[, c(2,3,4)]),2)
 
 knitr::kable(cor_collapsed, format = "html", caption = "Correlations Adzuna Australia and IVI job ads counts over time, all occupations and GCCSAs") %>% 
   kable_styling("striped", full_width = F)
@@ -88,7 +89,7 @@ To get another perspective of the comparison the counts from the two datasets ov
 
 ```{r plotGCCSA, out.width='100%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Adzuna Australia and IVI job ads counts - GCCSA"}
 
-df_merged_long_GCCSA <- df_merged_long %>%
+df_merged_long_GCCSA <- df_merged_long_occupation_GCCSA %>%
   filter(source != "Adzuna_count") %>%
   group_by(Month, GCCSA, source) %>%
   summarise(count = sum(count))
@@ -108,7 +109,7 @@ ggplot(df_merged_long_GCCSA, aes(x = Month, y = count, colour = source)) +
 Table \@ref(tab:corrGCCSA) shows correlation between Adzuna Australia and IVI job ads counts per GCCSA over time and all occupations. 
 
 ```{r corrGCCSA, out.width='50%', echo=T}
-df_merged_GCCSA <- df_merged %>%
+df_merged_GCCSA <- df_merged_occupation_GCCSA %>%
   group_by(Month, GCCSA) %>%
   summarise(Adzuna_mav_count = sum(Adzuna_mav_count),
             IVI_count = sum(IVI_count))
@@ -151,7 +152,7 @@ knitr::kable(correlations_GCCSA, format = "html", caption = "Correlations Adzuna
 Figure \@ref(fig:plotOccupation) compares counts of Adzuna Australia and IVI job ads per major occupational group (unsing ANZCO - Australian and New Zealand Standard Classification of Occupations) over time and all GCCSAs. Again, we scatter plot the data and fit a LOESS curve. 
 
 ```{r plotOccupation, out.width='100%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="IVI and Adzuna job ads count - Occupations"}
-df_merged_long_occupation <- df_merged_long %>%
+df_merged_long_occupation <- df_merged_long_occupation_GCCSA %>%
   filter(source != "Adzuna_count") %>%
   group_by(Month, ANZSCO_TITLE, source) %>%
   summarise(count = sum(count))
@@ -171,7 +172,7 @@ ggplot(df_merged_long_occupation, aes(x = Month, y = count, colour = source)) +
 Table \@ref(tab:corrOccupation) shows correlation between Adzuna Australia and IVI job ads counts per major ANZCO occupational group over time and all GCCSAs.
 
 ```{r corrOccupation, out.width='100%', echo = T}
-df_merged_occupation <- df_merged %>%
+df_merged_occupation <- df_merged_occupation_GCCSA %>%
   group_by(Month, ANZSCO_TITLE) %>%
   summarise(Adzuna_mav_count = sum(Adzuna_mav_count),
             IVI_count = sum(IVI_count))
@@ -207,7 +208,7 @@ Next we plot detailed correlations between the datasets for all GCCSAs and occup
 
 ```{r plotCorrelations, out.width='100%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Adzuna Australia ans IVI job ads count detailed correlations"}
 
-df_merged %>%
+df_merged_occupation_GCCSA %>%
   group_by(GCCSA, ANZSCO_TITLE) %>%
   summarise(correlation = cor(Adzuna_mav_count, IVI_count)) %>%
   mutate(correlation = round(correlation, 2)) %>%
@@ -226,7 +227,7 @@ df_merged %>%
 And finally, we plot overall counts over time in both datasets for each GCCSA and occupation (see \@ref(fig:plotGCCSAvsOccupations)).
 
 ```{r plotGCCSAvsOccupations, out.width='100%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Overall Adzuna Australia and job ads counts  - GCCSAs and Occupations"}
-  df_merged_long %>%
+  df_merged_long_occupation_GCCSA %>%
     filter(source != "Adzuna_count")%>%
     group_by(GCCSA, ANZSCO_TITLE, source) %>%
     summarise(count = sum(count)) %>%
